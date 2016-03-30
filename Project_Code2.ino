@@ -27,7 +27,7 @@ I2CEncoder encoder_ElevatorMotor;
 //#define DEBUG_MODE_DISPLAY
 //#define DEBUG_MOTORS
 //#define DEBUG_LINE_TRACKERS
-#define DEBUG_ENCODERS
+//#define DEBUG_ENCODERS
 //#define DEBUG_ULTRASONIC
 //#define DEBUG_LINE_TRACKER_CALIBRATION
 //#define DEBUG_MOTOR_CALIBRATION
@@ -66,12 +66,12 @@ int leverCounter = 0;
 
 const int ci_Start_Button = 6;
 const int ci_Hall_Motor = 2;
-const int ci_Elevator_Motor = 6; //correct
 
-const int ci_Left_Motor = 10; //correct
-const int ci_Right_Motor = 11; //correct
-const int ci_Mid_Motor = 12; //correct
-const int ci_Lever_Motor = 13; //correct  ```
+const int ci_Left_Motor = 9; //correct
+const int ci_Right_Motor = 10; //correct
+const int ci_Mid_Motor = 11; //correct
+const int ci_Lever_Motor = 12; //correct  
+const int ci_Elevator_Motor = 13; 
 const int ci_Arm_Motor = 5; //correct
 const int ci_Grip_Motor = 4; //correct
 const int ci_Mode_Switch = 7;
@@ -83,16 +83,8 @@ const int ci_Hall_Sensor_3 = A3;
 const int ci_Light_Sensor = A4;
 const int ci_Left_Button = 8; //correct
 const int ci_Right_Button = 9; //correct
-
-
-
-const int ci_Right_Line_Tracker = A0;
-const int ci_Middle_Line_Tracker = A1;
-const int ci_Left_Line_Tracker = A2;
-const int ci_Light_Sensor = A3;
-const int ci_I2C_SDA = A4;         // I2C data = white
-const int ci_I2C_SCL = A5;         // I2C clock = yellow
-
+const int ci_Ultrasonic_Input = 6; //correct
+const int ci_Ultrasoncic_Output = 7;  //correct
 
 
 //constants
@@ -120,10 +112,10 @@ unsigned long ul_Echo_Time;
 unsigned int ui_Left_Line_Tracker_Data;
 unsigned int ui_Middle_Line_Tracker_Data;
 unsigned int ui_Right_Line_Tracker_Data;
-unsigned int ui_Motors_Speed = 1900;        // Default run speed
-unsigned int ui_Left_Motor_Speed = 1600;
-unsigned int ui_Right_Motor_Speed = 1600;
-unsigned int ui_Mid_Motor_Speed = 1500;
+unsigned int ui_Left_Motor_Speed;
+unsigned int ui_Right_Motor_Speed;
+unsigned int ui_Mid_Motor_Speed;
+unsigned int ui_Elevator_Motor_Speed;
 long l_Left_Motor_Position;
 long l_Right_Motor_Position;
 
@@ -202,45 +194,36 @@ void setup() {
   servo_LeverMotor.attach(ci_Lever_Motor);
 
   //set up elevator motor
-  pinMode(
+  pinMode(ci_Elevator_Motor, OUTPUT);
+  servo_ElevatorMotor.attach(ci_Elevator_Motor);
 
-    //set up hall motor
-    pinMode(ci_Hall_Motor, OUTPUT)
-    servo_HallMotor.attach(ci_Hall_Motor);
+  //set up hall motor
+  pinMode(ci_Hall_Motor, OUTPUT)
+  servo_HallMotor.attach(ci_Hall_Motor);
 
-    //set up left button
-    pinMode(ci_Left_Button, INPUT);
-    digitalWrite(ci_Left_Button, HIGH);
+  //set up left button
+  pinMode(ci_Left_Button, INPUT);
+  digitalWrite(ci_Left_Button, HIGH);
 
-    //set up hall sensors
-    pinMode(ci_Hall_Sensor_0, INPUT);
-    pinMode(ci_Hall_Sensor_1, INPUT);
-    pinMode(ci_Hall_Sensor_2, INPUT);
-    pinMode(ci_Hall_Sensor_3, INPUT);
+  //set up hall sensors
+  pinMode(ci_Hall_Sensor_0, INPUT);
+  pinMode(ci_Hall_Sensor_1, INPUT);
+  pinMode(ci_Hall_Sensor_2, INPUT);
+  pinMode(ci_Hall_Sensor_3, INPUT);
 
-    / set up light sensor
-    pinMode(ci_Light_Sensor, INPUT);
+  / set up light sensor
+  pinMode(ci_Light_Sensor, INPUT);
 
-
-
-
-    // set up encoders. Must be initialized in order that they are chained together,
-    // starting with the encoder directly connected to the Arduino. See I2CEncoder docs
-    // for more information
-    encoder_LeftMotor.init(1.0 / 3.0 * MOTOR_393_SPEED_ROTATIONS, MOTOR_393_TIME_DELTA);
-    encoder_LeftMotor.setReversed(true);  // adjust for positive count when moving forward
-    encoder_RightMotor.init(1.0 / 3.0 * MOTOR_393_SPEED_ROTATIONS, MOTOR_393_TIME_DELTA);
-    encoder_RightMotor.setReversed(false);  // adjust for positive count when moving forward
-    encoder_MidMotor.init(1.0 / 3.0 * MOTOR_393_SPEED_ROTATIONS, MOTOR_393_TIME_DELTA);
-    encoder_MidMotor.setReversed(true);  // adjust for positive count when moving forward
-    encoder_LeverMotor.init(1.0 / 3.0 * MOTOR_393_SPEED_ROTATIONS, MOTOR_393_TIME_DELTA);
-    encoder_LeverMotor.setReversed(false);  // adjust for positive count when moving forward
-    encoder_ElevatorMotor.init(1.0 / 3.0 * MOTOR_393_SPEED_ROTATIONS, MOTOR_393_TIME_DELTA);
-    encoder_ElevatorMotor.setReversed(true);  // adjust for positive count when moving forward
-
-
-
-
+  encoder_LeftMotor.init(1.0 / 3.0 * MOTOR_393_SPEED_ROTATIONS, MOTOR_393_TIME_DELTA);
+  encoder_LeftMotor.setReversed(true);  // adjust for positive count when moving forward
+  encoder_RightMotor.init(1.0 / 3.0 * MOTOR_393_SPEED_ROTATIONS, MOTOR_393_TIME_DELTA);
+  encoder_RightMotor.setReversed(false);  // adjust for positive count when moving forward
+  encoder_MidMotor.init(1.0 / 3.0 * MOTOR_393_SPEED_ROTATIONS, MOTOR_393_TIME_DELTA);
+  encoder_MidMotor.setReversed(true);  // adjust for positive count when moving forward
+  encoder_LeverMotor.init(1.0 / 3.0 * MOTOR_393_SPEED_ROTATIONS, MOTOR_393_TIME_DELTA);
+  encoder_LeverMotor.setReversed(false);  // adjust for positive count when moving forward
+  encoder_ElevatorMotor.init(1.0 / 3.0 * MOTOR_393_SPEED_ROTATIONS, MOTOR_393_TIME_DELTA);
+  encoder_ElevatorMotor.setReversed(true);  // adjust for positive count when moving forward
 }
 
 
@@ -252,12 +235,13 @@ void loop()
   }
 
   //mode 0
-  if (cuerrentMode() == 0)
+  if (currentMode() == 0)
   {
     raiseLever();
-    servo_LeftMotor.writeMicroseconds(ci_Left_Motor_Stop);
-    servo_MidMotor.writeMicroseconds(ci_Mid_Motor_Stop);
-    servo_RightMotor.writeMicroseconds(ci_Right_Motor_Stop);
+    hallExtend();
+    servo_LeftMotor.writeMicroseconds(1500);
+    servo_MidMotor.writeMicroseconds(1500);
+    servo_RightMotor.writeMicroseconds(1500);
     servo_ArmMotor.write(ci_Arm_Servo_Retracted);
     servo_GripMotor.write(ci_Grip_Motor_Closed);
     encoder_LeftMotor.zero();
@@ -305,98 +289,22 @@ void loop()
 
 
 
+  //mode 2
+  if (currentMode() == 2)
+  {
 
+    
 
 
+  }
 
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#ifdef DEBUG_MOTORS
-
-  Serial.print(", Default: ");
-  Serial.print(ui_Motors_Speed);
-  Serial.print(", Left = ");
-  Serial.print(ui_Left_Motor_Speed);
-  Serial.print(", Right = ");
-  Serial.println(ui_Right_Motor_Speed);
-#endif
-
+  updateMotorSpeed();
 
 }
 
-
-
-
-
-
-//mode 2
-if (currentMode() == 2)
-{
-  ui_Right_Motor_Speed = 1500;
-  ui_Right_Motor_Speed = 1500;
-}
-updateMotorSpeed();
-
-}
 
 
 
@@ -425,7 +333,6 @@ boolean fluxDetected()
   else return false;
 }
 
-
 int currentMode()
 {
   if (startRunning == true)
@@ -447,19 +354,20 @@ void updateMotorSpeed()
   servo_LeftMotor.writeMicroseconds(ui_Left_Motor_Speed);
   servo_RightMotor.writeMicroseconds(ui_Right_Motor_Speed);
   servo_MidMotor.writeMicroseconds(ui_Mid_Motor_Speed);
+  servo_LeverMotor.writeMicroseconds(ui_Lever_Motor_Speed);
+  servo_ElevatorMotor.writeMicroseconds(ui_Elevator_Motor_Speed);
 }
 
-
-void driveStraight() //function to update speed of motors using PID controllers for both motors
+void driveStraight()
 {
-  servo_LeftMotor.writeMicroseconds(1890);
-  servo_RightMotor.writeMicroseconds(1820);
+  ui_Left_Motor_Speed = 1890;
+  ui_Right_Motor_Speed = 1820;
 }
 
 void driveBackwards()
 {
-  servo_LeftMotor.writeMicroseconds(1240);
-  servo_RightMotor.writeMicroseconds(1270);
+  ui_Left_Motor_Speed = 1240;
+  ui_Right_Motor_Speed = 1270;
 }
 
 void driveSideways(boolean dir) //0 = right, 1 = left
@@ -478,32 +386,32 @@ void driveSideways(boolean dir) //0 = right, 1 = left
   }
 }
 
-void dimeTurn(boolean dir) //dir = 0 -> right, dir = 1 -> left
+void dimeTurn(boolean dir) //dir = 0 -> right, dir = 1 -> left, turns robot 90 degrees
 {
   if (dir == 1)
   {
     if (encoder_RightMotor.getRawPosition() < 380)
     {
-      servo_RightMotor.writeMicroseconds(1700);
+      ui_Right_Motor_Speed = 1700;
     }
     if (encoder_LeftMotor.getRawPosition() > -292)
     {
-      servo_LeftMotor.writeMicroseconds(1300);
+      ui_Left_Motor_Speed = 1300;
     }
     if (encoder_RightMotor.getRawPosition() >= 380)
     {
-      servo_RightMotor.writeMicroseconds(1500);
+      ui_Right_Motor_Speed = 1500;
     }
     if (encoder_LeftMotor.getRawPosition() <= -292)
     {
-      servo_LeftMotor.writeMicroseconds(1500);
+      ui_Left_Motor_Speed = 1500;
     }
   }
   if (dir == 1)
   {
     if (encoder_LeftMotor.getRawPosition() < 353)
     {
-      servo_LeftMotor.writeMicroseconds(1755);
+      ui_Left_Motor_Speed = 1755;
     }
     if (encoder_RightMotor.getRawPosition() > -283)
     {
@@ -511,11 +419,11 @@ void dimeTurn(boolean dir) //dir = 0 -> right, dir = 1 -> left
     }
     if (encoder_LeftMotor.getRawPosition() >= 353)
     {
-      servo_LeftMotor.writeMicroseconds(1500);
+      ui_Left_Motor_Speed = 1500;
     }
     if (encoder_RightMotor.getRawPosition() <= -283)
     {
-      servo_RightMotor.writeMicroseconds(1500);
+      ui_Right_Motor_Speed = 1500;
     }
   }
 }
@@ -537,167 +445,171 @@ void dimeTurn(boolean dir) //dir = 0 -> right, dir = 1 -> left
 
 
 
-  void pickupTesseract1() //should bring the bot in the correct horizonral orientation, still need to determine values
+void pickupTesseract1() //should bring the bot in the correct horizonral orientation, still need to determine values
+{
+  if (sensorDetected == 0)
   {
-    if (sensorDetected == 0)
+    if (encoder_MidMotor.getRawPosition() < 100)
     {
-      if (encoder_MidMotor.getRawPosition() < 100)
-      {
-        driveSideways(1);
-      }
-      else
-      {
-        correctPosition = true;
-      }
+      driveSideways(1);
     }
-
-    if (sensorDetected == 1)
+    else
     {
-      if (encoder_MidMotor.getRawPosition() < 200)
-      {
-        driveSideways(1);
-      }
-      else
-      {
-        correctPosition = true;
-      }
-    }
-
-    if (sensorDetected == 2)
-    {
-      if (encoder_MidMotor.getRawPosition() < 100)
-      {
-        driveSideways(1);
-      }
-      else
-      {
-        correctPosition = true;
-      }
-    }
-
-    if (sensorDetected == 3)
-    {
-      if (encoder_MidMotor.getRawPosition() < 100)
-      {
-        driveSideways(1);
-      }
-      else
-      {
-        correctPosition = true;
-      }
-    }
-
-    if (sensorDetected == 4)
-    {
-      if (encoder_MidMotor.getRawPosition() < 100)
-      {
-        driveSideways(1);
-      }
-      else
-      {
-        correctPosition = true;
-      }
+      correctPosition = true;
     }
   }
 
-  void pickupTesseract2() //should pick the tesseract up, for now just stop the robot
+  if (sensorDetected == 1)
   {
-    ui_Right_Motor_Speed = 1500;
-    ui_Left_Motor_Speed = 1500;
-  }
-
-
-
-
-
-  void raiseLever()
-  {
-    currentAngle = encoder_LeverMotor.getRawPosition();
-    if (currentAngle < 60 && counter == 0)
+    if (encoder_MidMotor.getRawPosition() < 200)
     {
-      servo_LeverMotor.writeMicroseconds(1850);
+      driveSideways(1);
     }
-    if (currentAngle < 129 && currentAngle > 60 && counter == 0)
+    else
     {
-      counter = 1;
-    }
-    if (currentAngle > 129 && counter == 0)
-    {
-      counter = 1;
-    }
-    if (counter == 1)
-    {
-      error = 129 - currentAngle;
-      correction = kl * error + 1500;
-      servo_LeverMotor.writeMicroseconds(correction);
+      correctPosition = true;
     }
   }
 
-  void hallExtend()
+  if (sensorDetected == 2)
   {
-    servo_Hall.write(145);
+    if (encoder_MidMotor.getRawPosition() < 100)
+    {
+      driveSideways(1);
+    }
+    else
+    {
+      correctPosition = true;
+    }
   }
 
-  void hallRetract()
+  if (sensorDetected == 3)
   {
-    servo_Hall.write(30);
+    if (encoder_MidMotor.getRawPosition() < 100)
+    {
+      driveSideways(1);
+    }
+    else
+    {
+      correctPosition = true;
+    }
   }
 
-  void clawOpen()
+  if (sensorDetected == 4)
   {
-    servo_GripMotor.write(180);
+    if (encoder_MidMotor.getRawPosition() < 100)
+    {
+      driveSideways(1);
+    }
+    else
+    {
+      correctPosition = true;
+    }
   }
+}
 
-  void clawClose()
+void pickupTesseract2() //should pick the tesseract up, for now just stop the robot
+{
+  ui_Right_Motor_Speed = 1500;
+  ui_Left_Motor_Speed = 1500;
+}
+
+
+
+
+
+void raiseLever()
+{
+  currentAngle = encoder_LeverMotor.getRawPosition();
+  if (currentAngle < 60 && counter == 0)
   {
-    servo_GripMotor.write(115);
+    ui_Lever_Motor_Speed = 1850;
   }
-
-  void armDown()
+  if (currentAngle < 129 && currentAngle > 60 && counter == 0)
   {
-    servo_armMotor.write(180);
+    counter = 1;
   }
-
-  void armUp()
+  if (currentAngle > 129 && counter == 0)
   {
-    servo_armMotor.write(5);
+    counter = 1;
   }
-
-
-
-
-  boolean frontWallDetected()
+  if (counter == 1)
   {
-
-
+    error = 129 - currentAngle;
+    correction = kl * error + 1500;
+    ui_Lever_Motor_Speed = correction;
   }
+}
+
+void hallExtend()
+{
+  servo_Hall.write(145);
+}
+
+void hallRetract()
+{
+  servo_Hall.write(30);
+}
+
+void clawOpen()
+{
+  servo_GripMotor.write(180);
+}
+
+void clawClose()
+{
+  servo_GripMotor.write(115);
+}
+
+void armDown()
+{
+  servo_armMotor.write(180);
+}
+
+void armUp()
+{
+  servo_armMotor.write(5);
+}
 
 
-  boolean leftWallDetected()
-  {
-    if (digitalRead(ci_Left_Button == LOW)
+
+
+boolean frontWallDetected()
+{
+  Ping();
+  if (ul_Echo_Time/58 < 3)
   {
     return true;
   }
-  else
-  {
-    return false;
-  }
+  else return false;
+}
+
+
+boolean leftWallDetected()
+{
+  if (digitalRead(ci_Left_Button == LOW)
+{
+  return true;
+}
+else
+{
+  return false;
+}
 
 }
 
 boolean rightWallDetected()
-  {
-    if (digitalRead(ci_Right_Button == LOW)
-  {
-    return true;
-  }
-  else
-  {
-    return false;
-  }
+{
+  if (digitalRead(ci_Right_Button == LOW)
+{
+  return true;
+}
+else
+{
+  return false;
 }
 }
+
 
 
 boolean lineDetected()
@@ -708,28 +620,32 @@ boolean lineDetected()
 
 
 
-
-
 void reZero()
 {
 
 }
 
-
 void raiseClaw() //implement once get motor controller
 {
-
+  ui_Elevator_Motor_Speed = 1650;
 }
 
 void lowerClaw()  //implement once get motor controller
 {
+  ui_Elevator_Motor_Speed = 1350;
 }
 
 
-void dropOff() //puts lever and claw in correct position for drop off
-[
-
+void dropOffPosition() //puts lever and claw in correct position for drop off
+{
+    
 }
+
+
+
+
+
+
 
 void ultrasonicLeft()
 {
@@ -741,6 +657,39 @@ void ultrasonicRight()
 
 void ultrasonicStraight()
 {
+}
+
+void Ping()
+{
+  digitalWrite(ci_Ultrasonic_Input, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(ci_Ultrasonic_Input, LOW);
+  ul_Echo_Time = pulseIn(ci_Ultrasonic_Output, HIGH, 10000);
+
+#ifdef DEBUG_ULTRASONIC
+  Serial.print("Time (microseconds): ");
+  Serial.print(ul_Echo_Time, DEC);
+  Serial.print(", Inches: ");
+  Serial.print(ul_Echo_Time/148); //divide time by 148 to get distance in inches
+  Serial.print(", cm: ");
+  Serial.println(ul_Echo_Time/58); //divide time by 58 to get distance in cm 
+#endif
+}  
+
+
+
+
+
+
+
+
+//******************************************Mode 2 Function****************************************//
+
+
+void scanner() // function to wait and scan for tesseracts to be dropped off
+{
+  
+  
 }
 
 
